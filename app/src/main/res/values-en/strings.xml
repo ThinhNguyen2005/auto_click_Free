@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Auto Click Free</string>
+    <string name="accessibility_service_description">Accessibility service for simulated tap gestures based on user configuration.</string>
+    <string name="fgs_notification_title">Auto Click is active</string>
+    <string name="fgs_notification_content">Tap the floating icon to control or open the application.</string>
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_title">Permission Setup</string>
+    <string name="onboarding_subtitle">Please grant the following permissions to enable automated tap features smoothly.</string>
+    <string name="perm_accessibility_title">Accessibility Service</string>
+    <string name="perm_accessibility_desc">Required to dispatch tap gestures on your behalf without requiring root access.</string>
+    <string name="perm_overlay_title">Display Over Other Apps (Overlay)</string>
+    <string name="perm_overlay_desc">Required to display the floating control bar and target pointer on top of other screens.</string>
+    <string name="perm_notification_title">Notifications</string>
+    <string name="perm_notification_desc">Required on Android 13+ to maintain Foreground Service stability without being killed.</string>
+    <string name="perm_battery_title">Battery Optimization Exemption</string>
+    <string name="perm_battery_desc">Prevents aggressive OEM battery managers from abruptly terminating the background service.</string>
+
+    <string name="status_granted">Granted</string>
+    <string name="status_not_granted">Not Granted</string>
+    <string name="status_recommended">Recommended</string>
+    <string name="action_grant">Grant</string>
+    <string name="action_open_settings">Settings</string>
+    <string name="btn_start_service">Launch Floating Controls</string>
+    <string name="btn_stop_service">Stop Floating Controls</string>
+    <string name="service_running_badge">Floating Controller Active</string>
+    <string name="service_stopped_badge">Floating Controller Inactive</string>
+    <string name="disclaimer_title">Notice &amp; Disclaimer</string>
+    <string name="disclaimer_text">This application uses the AccessibilityService API solely for user-instructed automation gestures. Users are responsible for complying with third-party application terms of service.</string>
+</resources>

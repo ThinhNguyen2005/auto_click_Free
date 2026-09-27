@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Auto Click Free</string>
+    <string name="accessibility_service_description">Dịch vụ hỗ trợ chạm tự động cho người dùng. Cho phép thực hiện các cử chỉ chạm và vuốt theo cấu hình mà người dùng thiết lập.</string>
+    <string name="fgs_notification_title">Auto Click đang chạy</string>
+    <string name="fgs_notification_content">Bấm vào biểu tượng nổi để điều khiển hoặc chạm để mở ứng dụng.</string>
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_title">Thiết lập quyền ứng dụng</string>
+    <string name="onboarding_subtitle">Để ứng dụng hoạt động chính xác và không bị gián đoạn, vui lòng cấp các quyền bên dưới.</string>
+    <string name="perm_accessibility_title">Dịch vụ hỗ trợ (Accessibility)</string>
+    <string name="perm_accessibility_desc">Bắt buộc để gửi thao tác chạm (dispatch gestures) thay bạn mà không cần root máy.</string>
+    <string name="perm_overlay_title">Hiển thị trên ứng dụng khác (Overlay)</string>
+    <string name="perm_overlay_desc">Bắt buộc để hiển thị thanh điều khiển nổi và tâm ngắm chọn điểm trên màn hình.</string>
+    <string name="perm_notification_title">Thông báo (Notification)</string>
+    <string name="perm_notification_desc">Duy trì dịch vụ chạy nền ổn định trên Android 13+ qua Foreground Service.</string>
+    <string name="perm_battery_title">Bỏ qua tối ưu hóa pin</string>
+    <string name="perm_battery_desc">Ngăn hệ điều hành (MIUI, OneUI, ColorOS) tự động tắt app khi đang chạy ngầm.</string>
+
+    <string name="status_granted">Đã cấp</string>
+    <string name="status_not_granted">Chưa cấp</string>
+    <string name="status_recommended">Khuyên dùng</string>
+    <string name="action_grant">Cấp quyền</string>
+    <string name="action_open_settings">Mở Cài đặt</string>
+    <string name="btn_start_service">Khởi động bảng điều khiển nổi</string>
+    <string name="btn_stop_service">Dừng bảng điều khiển nổi</string>
+    <string name="service_running_badge">Bảng điều khiển đang hoạt động</string>
+    <string name="service_stopped_badge">Bảng điều khiển chưa chạy</string>
+    <string name="disclaimer_title">Lưu ý &amp; Miễn trừ trách nhiệm</string>
+    <string name="disclaimer_text">Ứng dụng chỉ sử dụng AccessibilityService để mô phỏng cử chỉ do người dùng yêu cầu. Người dùng chịu trách nhiệm tuân thủ Điều khoản sử dụng của các ứng dụng bên thứ ba.</string>
+</resources>
