@@ -2,8 +2,15 @@ package com.giathinh.auto_click_free
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
+import android.app.KeyguardManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Path
+import android.os.PowerManager
 import android.view.accessibility.AccessibilityEvent
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,18 +22,30 @@ import kotlinx.coroutines.launch
 
 /**
  * Service duy nhất chịu trách nhiệm dispatch gesture thực tế.
- * Không chứa logic UI, chỉ lắng nghe ClickerEngine.state và điều khiển vòng lặp click.
- * Mọi thao tác chờ (delay) đều diễn ra trên Coroutine (Dispatchers.Default),
- * tuyệt đối không bao giờ dùng Thread.sleep() làm block Main Thread.
+ * Tự động tạm dừng ngay lập tức khi tắt màn hình hoặc khi màn hình khóa (Lockscreen)
+ * để bảo vệ thiết bị, tránh chạm nhầm mật khẩu màn hình khóa hoặc gây hao pin.
  */
 class ClickAccessibilityService : AccessibilityService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.Default + Job())
     private var loopJob: Job? = null
+    private var isReceiverRegistered = false
+
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF -> {
+                    // Tự động tạm dừng ngay khi người dùng bấm tắt màn hình
+                    ClickerEngine.pause()
+                }
+            }
+        }
+    }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        registerScreenStateReceiver()
 
         serviceScope.launch {
             ClickerEngine.state.collectLatest { state ->
@@ -41,12 +60,34 @@ class ClickAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun registerScreenStateReceiver() {
+        if (!isReceiverRegistered) {
+            val filter = IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+            }
+            ContextCompat.registerReceiver(
+                this,
+                screenReceiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+            isReceiverRegistered = true
+        }
+    }
+
     private fun startLoopIfNeeded() {
         if (loopJob?.isActive == true) return
         loopJob = serviceScope.launch {
             try {
                 while (ClickerEngine.state.value != ClickerState.IDLE) {
                     if (ClickerEngine.state.value == ClickerState.RUNNING) {
+                        // Kiểm tra an toàn: nếu màn hình đang tắt hoặc đang khóa, lập tức dừng click
+                        if (isDeviceScreenOffOrLocked()) {
+                            ClickerEngine.pause()
+                            delay(200L)
+                            continue
+                        }
+
                         val config = ClickerEngine.config.value
                         performRandomizedClick(config)
                         ClickerEngine.incrementClickCount()
@@ -58,10 +99,24 @@ class ClickAccessibilityService : AccessibilityService() {
                     }
                 }
             } catch (e: CancellationException) {
-                // Tôn trọng Coroutine Cancellation theo chuẩn @android-pro
                 throw e
             }
         }
+    }
+
+    /**
+     * Kiểm tra trạng thái màn hình và màn hình khóa:
+     * - Screen off: powerManager.isInteractive == false
+     * - Lock screen: keyguardManager.isKeyguardLocked == true
+     */
+    private fun isDeviceScreenOffOrLocked(): Boolean {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+
+        val isScreenInteractive = powerManager?.isInteractive ?: true
+        val isLocked = keyguardManager?.isKeyguardLocked ?: false
+
+        return !isScreenInteractive || isLocked
     }
 
     private fun stopLoop() {
@@ -102,6 +157,10 @@ class ClickAccessibilityService : AccessibilityService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (isReceiverRegistered) {
+            runCatching { unregisterReceiver(screenReceiver) }
+            isReceiverRegistered = false
+        }
         stopLoop()
         serviceScope.cancel()
         instance = null
