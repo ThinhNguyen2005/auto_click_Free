@@ -44,4 +44,5 @@
     <string name="close_panel_desc">Close panel</string>
     <string name="bubble_desc">Auto Click floating control</string>
     <string name="target_pointer_desc">Target point 1 crosshair</string>
+    <string name="emergency_stop_tip">⚡ Tip: Press Volume button or tap bubble for Emergency Stop</string>
 </resources>

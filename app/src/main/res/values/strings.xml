@@ -44,4 +44,5 @@
     <string name="close_panel_desc">Đóng bảng điều khiển</string>
     <string name="bubble_desc">Nút điều khiển nổi Auto Click</string>
     <string name="target_pointer_desc">Tâm ngắm điểm chạm số 1</string>
+    <string name="emergency_stop_tip">⚡ Mẹo: Bấm nút Âm Lượng hoặc chạm nút nổi để Dừng khẩn cấp</string>
 </resources>

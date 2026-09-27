@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Path
 import android.os.PowerManager
+import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CancellationException
@@ -148,6 +149,19 @@ class ClickAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         // Không cần xử lý sự kiện UI bên thứ ba cho chức năng auto-click
+    }
+
+    override fun onKeyEvent(event: KeyEvent?): Boolean {
+        if (event?.action == KeyEvent.ACTION_DOWN) {
+            val keyCode = event.keyCode
+            if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+                if (ClickerEngine.state.value == ClickerState.RUNNING) {
+                    ClickerEngine.pause()
+                    return true // Chặn sự kiện âm lượng và tạm dừng clicker khẩn cấp
+                }
+            }
+        }
+        return super.onKeyEvent(event)
     }
 
     override fun onInterrupt() {

@@ -3,9 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:accessibilityEventTypes="typeWindowStateChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagDefault"
+    android:accessibilityFlags="flagDefault|flagRequestFilterKeyEvents"
     android:canPerformGestures="true"
     android:canRetrieveWindowContent="false"
+    android:canRequestFilterKeyEvents="true"
     android:notificationTimeout="100"
     android:description="@string/accessibility_service_description"
     tools:ignore="AccessibilityPolicy" />

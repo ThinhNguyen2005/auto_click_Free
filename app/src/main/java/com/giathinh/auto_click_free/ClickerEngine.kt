@@ -26,7 +26,7 @@ enum class ClickerState { IDLE, RUNNING, PAUSED }
 data class ClickerConfig(
     val x: Float = 500f,
     val y: Float = 800f,
-    val intervalMs: Long = 100L,
+    val intervalMs: Long = 500L,
     val jitterMs: Long = 15L,
     val radiusPx: Float = 12f,
     val minHoldMs: Long = 40L,

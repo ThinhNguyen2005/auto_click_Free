@@ -211,7 +211,12 @@ class FloatingBubbleService : Service() {
         }
 
         bubble.setOnClickListener {
-            togglePanel()
+            if (ClickerEngine.state.value == ClickerState.RUNNING) {
+                // Nhấn 1 chạm vào nút nổi khi đang chạy -> Dừng ngay lập tức!
+                ClickerEngine.pause()
+            } else {
+                togglePanel()
+            }
         }
 
         windowManager.addView(bubble, params)
@@ -304,13 +309,13 @@ class FloatingBubbleService : Service() {
         root.addView(intervalLabel)
 
         val seek = SeekBar(this).apply {
-            max = 970 // Từ 30ms đến 1000ms
-            progress = (ClickerEngine.config.value.intervalMs - 30).toInt().coerceIn(0, 970)
+            max = 1950 // Từ 50ms đến 2000ms
+            progress = (ClickerEngine.config.value.intervalMs - 50).toInt().coerceIn(0, 1950)
             setPadding(0, dpToPx(8f).toInt(), 0, dpToPx(8f).toInt())
         }
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
-                val ms = (30 + progress).toLong()
+                val ms = (50 + progress).toLong()
                 intervalLabel.text = getString(R.string.panel_interval_format, ms)
                 if (fromUser) ClickerEngine.updateInterval(ms)
             }
@@ -354,6 +359,15 @@ class FloatingBubbleService : Service() {
         buttonRow.addView(stopBtn)
         root.addView(buttonRow)
 
+        // Mẹo phím dừng khẩn cấp
+        val tipText = TextView(this).apply {
+            text = getString(R.string.emergency_stop_tip)
+            textSize = 11f
+            setTextColor(0xFFFBBF24.toInt()) // Amber-400
+            setPadding(0, dpToPx(4f).toInt(), 0, dpToPx(8f).toInt())
+        }
+        root.addView(tipText)
+
         // Nút bật/tắt tâm ngắm
         val toggleTargetBtn = Button(this).apply {
             text = getString(R.string.btn_toggle_target)
@@ -395,22 +409,39 @@ class FloatingBubbleService : Service() {
     // 4. LẮNG NGHE ENGINE VÀ ĐỒNG BỘ
     // =========================================================================
 
+    private fun setTargetPointerTouchable(touchable: Boolean) {
+        val pointer = targetPointerView ?: return
+        val layoutParams = pointer.layoutParams as? WindowManager.LayoutParams ?: return
+        val currentFlags = layoutParams.flags
+        val newFlags = if (touchable) {
+            currentFlags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+        } else {
+            currentFlags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        }
+        if (newFlags != currentFlags) {
+            layoutParams.flags = newFlags
+            pointer.alpha = if (touchable) 1.0f else 0.7f
+            runCatching { windowManager.updateViewLayout(pointer, layoutParams) }
+        }
+    }
+
     private fun observeEngine() {
         serviceScope.launch {
             ClickerEngine.state.collectLatest { state ->
+                setTargetPointerTouchable(state != ClickerState.RUNNING)
                 (bubbleView as? TextView)?.apply {
                     when (state) {
                         ClickerState.RUNNING -> {
                             text = "❙❙"
-                            setTextColor(0xFFF59E0B.toInt()) // Amber
+                            setTextColor(0xFFEF4444.toInt()) // Đỏ nổi bật để người dùng nhận biết ngay lập tức
                         }
                         ClickerState.PAUSED -> {
                             text = "▶"
-                            setTextColor(0xFF10B981.toInt()) // Emerald
+                            setTextColor(0xFF10B981.toInt()) // Xanh lá sẵn sàng tiếp tục
                         }
                         ClickerState.IDLE -> {
                             text = "▶"
-                            setTextColor(0xFF38BDF8.toInt()) // Sky
+                            setTextColor(0xFF38BDF8.toInt()) // Xanh trời
                         }
                     }
                 }
