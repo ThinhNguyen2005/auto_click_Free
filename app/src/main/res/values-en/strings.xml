@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">Auto Click Free</string>
-    <string name="accessibility_service_description">Accessibility service for simulated tap gestures based on user configuration.</string>
+    <string name="accessibility_service_description">This application utilizes the AccessibilityService API solely to perform automated tap and gesture simulations configured by the user. It does not monitor, collect, or store any personal data or private information.</string>
     <string name="fgs_notification_title">Auto Click is active</string>
     <string name="fgs_notification_content">Tap the floating icon to control or open the application.</string>
+    <string name="notif_channel_name">Auto Click Service</string>
+    <string name="notif_channel_desc">Notification channel keeping floating controls active</string>
 
     <!-- Onboarding & Permissions -->
     <string name="onboarding_title">Permission Setup</string>
@@ -13,12 +15,12 @@
     <string name="perm_overlay_desc">Required to display the floating control bar and target pointer on top of other screens.</string>
     <string name="perm_notification_title">Notifications</string>
     <string name="perm_notification_desc">Required on Android 13+ to maintain Foreground Service stability without being killed.</string>
-    <string name="perm_battery_title">Battery Optimization Exemption</string>
-    <string name="perm_battery_desc">Prevents aggressive OEM battery managers from abruptly terminating the background service.</string>
+    <string name="battery_tip_title">Background Optimization (System Tip)</string>
+    <string name="battery_tip_desc">If your device (MIUI, OneUI, ColorOS) aggressively suspends background apps, please allow unrestricted background activity in App Info settings.</string>
 
     <string name="status_granted">Granted</string>
     <string name="status_not_granted">Not Granted</string>
-    <string name="status_recommended">Recommended</string>
+    <string name="status_info">Tip</string>
     <string name="action_grant">Grant</string>
     <string name="action_open_settings">Settings</string>
     <string name="btn_start_service">Launch Floating Controls</string>
@@ -27,4 +29,19 @@
     <string name="service_stopped_badge">Floating Controller Inactive</string>
     <string name="disclaimer_title">Notice &amp; Disclaimer</string>
     <string name="disclaimer_text">This application uses the AccessibilityService API solely for user-instructed automation gestures. Users are responsible for complying with third-party application terms of service.</string>
+
+    <!-- Panel & Bubble Strings -->
+    <string name="panel_status_running">● Running</string>
+    <string name="panel_status_paused">❙❙ Paused</string>
+    <string name="panel_status_idle">○ Ready</string>
+    <string name="btn_start">Start</string>
+    <string name="btn_pause">Pause</string>
+    <string name="btn_resume">Resume</string>
+    <string name="btn_stop">Stop</string>
+    <string name="btn_toggle_target">🎯 Toggle Target Pointer</string>
+    <string name="panel_interval_format">Click interval: %1$d ms</string>
+    <string name="panel_click_info_format">Clicks: %1$d | Target: (%2$d, %3$d)</string>
+    <string name="close_panel_desc">Close panel</string>
+    <string name="bubble_desc">Auto Click floating control</string>
+    <string name="target_pointer_desc">Target point 1 crosshair</string>
 </resources>

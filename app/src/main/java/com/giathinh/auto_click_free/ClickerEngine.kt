@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Trạng thái vòng đời của việc auto-click.
@@ -34,7 +36,6 @@ data class ClickerConfig(
 /**
  * Singleton giữ state + config, là cầu nối giữa FloatingBubbleService (UI)
  * và ClickAccessibilityService (nơi thực sự dispatch gesture).
- * Dùng StateFlow để cả hai phía observe mà không phụ thuộc trực tiếp vào nhau.
  */
 object ClickerEngine {
 
@@ -60,20 +61,12 @@ object ClickerEngine {
         _config.update { it.copy(intervalMs = newIntervalMs.coerceIn(30L, 5000L)) }
     }
 
-    fun updateJitter(newJitterMs: Long) {
-        _config.update { it.copy(jitterMs = newJitterMs.coerceIn(0L, 200L)) }
-    }
-
-    fun updateRadius(newRadiusPx: Float) {
-        _config.update { it.copy(radiusPx = newRadiusPx.coerceIn(0f, 100f)) }
+    fun updateInterval(duration: Duration) {
+        updateInterval(duration.inWholeMilliseconds)
     }
 
     fun toggleTargetPointerVisibility() {
         _isTargetPointerVisible.update { !it }
-    }
-
-    fun setTargetPointerVisibility(visible: Boolean) {
-        _isTargetPointerVisible.value = visible
     }
 
     fun start() {

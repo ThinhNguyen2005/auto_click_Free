@@ -11,9 +11,6 @@
     
     <!-- Android 13+ Notification permission -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    
-    <!-- Battery optimization exemption request -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:allowBackup="false"
@@ -29,7 +26,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.Auto_click_Free"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

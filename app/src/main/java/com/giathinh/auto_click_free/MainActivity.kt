@@ -3,11 +3,10 @@ package com.giathinh.auto_click_free
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.Settings
+import androidx.core.net.toUri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -34,8 +33,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -86,8 +83,7 @@ class MainActivity : ComponentActivity() {
 data class PermissionStatuses(
     val isAccessibilityGranted: Boolean = false,
     val isOverlayGranted: Boolean = false,
-    val isNotificationGranted: Boolean = false,
-    val isBatteryOptimizedIgnored: Boolean = false
+    val isNotificationGranted: Boolean = false
 )
 
 @Composable
@@ -100,7 +96,7 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
     }
 
     var isFloatingServiceRunning by remember {
-        mutableStateOf(false)
+        mutableStateOf(FloatingBubbleService.isServiceRunning)
     }
 
     // Tự động kiểm tra lại toàn bộ quyền mỗi khi người dùng quay lại từ Settings
@@ -108,6 +104,7 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 statuses = checkAllPermissions(context)
+                isFloatingServiceRunning = FloatingBubbleService.isServiceRunning
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -176,9 +173,9 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = if (allEssentialGranted) {
-                        "Đủ điều kiện hoạt động"
+                        stringResource(R.string.status_granted)
                     } else {
-                        "Cần cấp thêm quyền thiết yếu"
+                        stringResource(R.string.status_not_granted)
                     },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
@@ -187,7 +184,7 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         }
 
         Text(
-            text = "Danh sách quyền cần thiết",
+            text = stringResource(R.string.onboarding_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -215,7 +212,7 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
             onAction = {
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:${context.packageName}")
+                    "package:${context.packageName}".toUri()
                 ).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
@@ -236,17 +233,17 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        // 4. Battery Optimization Exemption (Khuyên dùng)
+        // 4. Mẹo tối ưu hóa nền (Tuân thủ Google Play Policy)
         PermissionCard(
-            title = stringResource(R.string.perm_battery_title),
-            description = stringResource(R.string.perm_battery_desc),
-            isGranted = statuses.isBatteryOptimizedIgnored,
+            title = stringResource(R.string.battery_tip_title),
+            description = stringResource(R.string.battery_tip_desc),
+            isGranted = true,
             isRequired = false,
-            badgeLabel = stringResource(R.string.status_recommended),
+            badgeLabel = stringResource(R.string.status_info),
             onAction = {
                 val intent = Intent(
-                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:${context.packageName}")
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    "package:${context.packageName}".toUri()
                 ).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
@@ -271,7 +268,7 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Bảng điều khiển nổi",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -387,6 +384,7 @@ fun PermissionCard(
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = when {
+                        badgeLabel != null -> Color(0xFFE0F2FE)
                         isGranted -> Color(0xFFD1FAE5)
                         isRequired -> Color(0xFFFEE2E2)
                         else -> Color(0xFFFEF3C7)
@@ -394,12 +392,13 @@ fun PermissionCard(
                 ) {
                     Text(
                         text = when {
-                            isGranted -> stringResource(R.string.status_granted)
                             badgeLabel != null -> badgeLabel
+                            isGranted -> stringResource(R.string.status_granted)
                             isRequired -> stringResource(R.string.status_not_granted)
-                            else -> stringResource(R.string.status_recommended)
+                            else -> stringResource(R.string.status_info)
                         },
                         color = when {
+                            badgeLabel != null -> Color(0xFF0369A1)
                             isGranted -> Color(0xFF065F46)
                             isRequired -> Color(0xFF991B1B)
                             else -> Color(0xFF92400E)
@@ -419,7 +418,7 @@ fun PermissionCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            if (!isGranted) {
+            if (!isGranted || badgeLabel != null) {
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedButton(
                     onClick = onAction,
@@ -428,7 +427,11 @@ fun PermissionCard(
                         .defaultMinSize(minHeight = 44.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.action_grant),
+                        text = if (!isGranted) {
+                            stringResource(R.string.action_grant)
+                        } else {
+                            stringResource(R.string.action_open_settings)
+                        },
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -438,7 +441,7 @@ fun PermissionCard(
 }
 
 /**
- * Kiểm tra tất cả các quyền cần thiết
+ * Kiểm tra tất cả các quyền cần thiết (Tuân thủ Google Play Policy)
  */
 fun checkAllPermissions(context: Context): PermissionStatuses {
     val isOverlay = Settings.canDrawOverlays(context)
@@ -453,14 +456,10 @@ fun checkAllPermissions(context: Context): PermissionStatuses {
         true
     }
 
-    val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-    val isBatteryIgnored = powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
-
     return PermissionStatuses(
         isAccessibilityGranted = isAccessibility,
         isOverlayGranted = isOverlay,
-        isNotificationGranted = isNotification,
-        isBatteryOptimizedIgnored = isBatteryIgnored
+        isNotificationGranted = isNotification
     )
 }
 

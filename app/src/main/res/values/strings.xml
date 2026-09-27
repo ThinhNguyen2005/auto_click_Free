@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">Auto Click Free</string>
-    <string name="accessibility_service_description">Dịch vụ hỗ trợ chạm tự động cho người dùng. Cho phép thực hiện các cử chỉ chạm và vuốt theo cấu hình mà người dùng thiết lập.</string>
+    <string name="accessibility_service_description">Ứng dụng này sử dụng AccessibilityService API nhằm mô phỏng cử chỉ chạm và vuốt tự động theo cấu hình của người dùng để hỗ trợ thao tác trên màn hình. Ứng dụng không thu thập, không theo dõi và không lưu trữ bất kỳ dữ liệu cá nhân hay thông tin riêng tư nào.</string>
     <string name="fgs_notification_title">Auto Click đang chạy</string>
     <string name="fgs_notification_content">Bấm vào biểu tượng nổi để điều khiển hoặc chạm để mở ứng dụng.</string>
+    <string name="notif_channel_name">Auto Click Service</string>
+    <string name="notif_channel_desc">Kênh thông báo duy trì bảng điều khiển nổi Auto Click</string>
 
     <!-- Onboarding & Permissions -->
     <string name="onboarding_title">Thiết lập quyền ứng dụng</string>
@@ -13,12 +15,12 @@
     <string name="perm_overlay_desc">Bắt buộc để hiển thị thanh điều khiển nổi và tâm ngắm chọn điểm trên màn hình.</string>
     <string name="perm_notification_title">Thông báo (Notification)</string>
     <string name="perm_notification_desc">Duy trì dịch vụ chạy nền ổn định trên Android 13+ qua Foreground Service.</string>
-    <string name="perm_battery_title">Bỏ qua tối ưu hóa pin</string>
-    <string name="perm_battery_desc">Ngăn hệ điều hành (MIUI, OneUI, ColorOS) tự động tắt app khi đang chạy ngầm.</string>
+    <string name="battery_tip_title">Tối ưu hóa chạy nền (Mẹo hệ thống)</string>
+    <string name="battery_tip_desc">Nếu máy của bạn (MIUI, OneUI, ColorOS) tự động tắt ứng dụng khi tắt màn hình, hãy cho phép ứng dụng chạy không giới hạn trong Cài đặt pin.</string>
 
     <string name="status_granted">Đã cấp</string>
     <string name="status_not_granted">Chưa cấp</string>
-    <string name="status_recommended">Khuyên dùng</string>
+    <string name="status_info">Hướng dẫn</string>
     <string name="action_grant">Cấp quyền</string>
     <string name="action_open_settings">Mở Cài đặt</string>
     <string name="btn_start_service">Khởi động bảng điều khiển nổi</string>
@@ -26,5 +28,20 @@
     <string name="service_running_badge">Bảng điều khiển đang hoạt động</string>
     <string name="service_stopped_badge">Bảng điều khiển chưa chạy</string>
     <string name="disclaimer_title">Lưu ý &amp; Miễn trừ trách nhiệm</string>
-    <string name="disclaimer_text">Ứng dụng chỉ sử dụng AccessibilityService để mô phỏng cử chỉ do người dùng yêu cầu. Người dùng chịu trách nhiệm tuân thủ Điều khoản sử dụng của các ứng dụng bên thứ ba.</string>
+    <string name="disclaimer_text">Ứng dụng chỉ sử dụng AccessibilityService để mô phỏng cử chỉ do người dùng chỉ định. Người dùng chịu trách nhiệm tuân thủ Điều khoản sử dụng của các ứng dụng bên thứ ba.</string>
+
+    <!-- Panel & Bubble Strings -->
+    <string name="panel_status_running">● Đang chạy</string>
+    <string name="panel_status_paused">❙❙ Tạm dừng</string>
+    <string name="panel_status_idle">○ Sẵn sàng</string>
+    <string name="btn_start">Bắt đầu</string>
+    <string name="btn_pause">Tạm dừng</string>
+    <string name="btn_resume">Tiếp tục</string>
+    <string name="btn_stop">Dừng</string>
+    <string name="btn_toggle_target">🎯 Ẩn / Hiện tâm ngắm</string>
+    <string name="panel_interval_format">Tốc độ click: %1$d ms</string>
+    <string name="panel_click_info_format">Số click: %1$d | Tâm: (%2$d, %3$d)</string>
+    <string name="close_panel_desc">Đóng bảng điều khiển</string>
+    <string name="bubble_desc">Nút điều khiển nổi Auto Click</string>
+    <string name="target_pointer_desc">Tâm ngắm điểm chạm số 1</string>
 </resources>

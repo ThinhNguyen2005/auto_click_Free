@@ -1,11 +1,13 @@
 package com.giathinh.auto_click_free
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -42,15 +44,24 @@ class FloatingBubbleService : Service() {
     private var bubbleView: View? = null
     private var panelView: View? = null
     private var targetPointerView: TargetPointerView? = null
-    private var targetPointerParams: WindowManager.LayoutParams? = null
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onCreate() {
         super.onCreate()
+        isServiceRunning = true
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
-        startForeground(NOTIF_ID, buildForegroundNotification())
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIF_ID,
+                buildForegroundNotification(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIF_ID, buildForegroundNotification())
+        }
 
         showBubble()
         showTargetPointer()
@@ -61,6 +72,7 @@ class FloatingBubbleService : Service() {
     // 1. TÂM NGẮM ĐIỂM CHẠM (TARGET POINTER) - Kéo thả để chọn điểm chính xác
     // =========================================================================
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun showTargetPointer() {
         if (targetPointerView != null) return
 
@@ -68,7 +80,7 @@ class FloatingBubbleService : Service() {
         val params = WindowManager.LayoutParams(
             sizePx,
             sizePx,
-            overlayType(),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -79,12 +91,13 @@ class FloatingBubbleService : Service() {
         }
 
         val pointer = TargetPointerView(this).apply {
+            contentDescription = getString(R.string.target_pointer_desc)
             var initialX = 0
             var initialY = 0
             var touchX = 0f
             var touchY = 0f
 
-            setOnTouchListener { _, event ->
+            setOnTouchListener { v, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         initialX = params.x
@@ -98,9 +111,8 @@ class FloatingBubbleService : Service() {
                         val dy = (event.rawY - touchY).toInt()
                         params.x = initialX + dx
                         params.y = initialY + dy
-                        windowManager.updateViewLayout(this, params)
+                        windowManager.updateViewLayout(v, params)
 
-                        // Cập nhật tọa độ tâm ngắm vào ClickerEngine
                         val centerX = params.x + sizePx / 2f
                         val centerY = params.y + sizePx / 2f
                         ClickerEngine.setTargetPoint(centerX, centerY)
@@ -110,6 +122,7 @@ class FloatingBubbleService : Service() {
                         val centerX = params.x + sizePx / 2f
                         val centerY = params.y + sizePx / 2f
                         ClickerEngine.setTargetPoint(centerX, centerY)
+                        v.performClick()
                         true
                     }
                     else -> false
@@ -119,7 +132,6 @@ class FloatingBubbleService : Service() {
 
         windowManager.addView(pointer, params)
         targetPointerView = pointer
-        targetPointerParams = params
     }
 
     private fun updateTargetPointerVisibility(visible: Boolean) {
@@ -130,12 +142,13 @@ class FloatingBubbleService : Service() {
     // 2. BUBBLE NÚT NỔI (Kéo thả + Snap cạnh)
     // =========================================================================
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun showBubble() {
         val bubbleSize = dpToPx(48f).toInt()
         val params = WindowManager.LayoutParams(
             bubbleSize,
             bubbleSize,
-            overlayType(),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -157,6 +170,7 @@ class FloatingBubbleService : Service() {
             background = bgDrawable
             setTextColor(0xFF38BDF8.toInt())
             elevation = dpToPx(6f)
+            contentDescription = getString(R.string.bubble_desc)
         }
 
         var initialX = 0
@@ -165,7 +179,7 @@ class FloatingBubbleService : Service() {
         var touchY = 0f
         var moved = false
 
-        bubble.setOnTouchListener { _, event ->
+        bubble.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     initialX = params.x
@@ -181,19 +195,23 @@ class FloatingBubbleService : Service() {
                     if (abs(dx) > 10 || abs(dy) > 10) moved = true
                     params.x = initialX + dx
                     params.y = initialY + dy
-                    windowManager.updateViewLayout(bubble, params)
+                    windowManager.updateViewLayout(v, params)
                     true
                 }
                 MotionEvent.ACTION_UP -> {
                     if (!moved) {
-                        togglePanel()
+                        v.performClick()
                     } else {
-                        snapBubbleToEdge(params, bubble)
+                        snapBubbleToEdge(params, v)
                     }
                     true
                 }
                 else -> false
             }
+        }
+
+        bubble.setOnClickListener {
+            togglePanel()
         }
 
         windowManager.addView(bubble, params)
@@ -224,7 +242,7 @@ class FloatingBubbleService : Service() {
         val params = WindowManager.LayoutParams(
             dpToPx(280f).toInt(),
             WindowManager.LayoutParams.WRAP_CONTENT,
-            overlayType(),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -253,7 +271,7 @@ class FloatingBubbleService : Service() {
             gravity = Gravity.CENTER_VERTICAL
         }
         val statusText = TextView(this).apply {
-            text = "Auto Click"
+            text = getString(R.string.app_name)
             textSize = 15f
             setTextColor(0xFFF8FAFC.toInt())
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
@@ -263,6 +281,7 @@ class FloatingBubbleService : Service() {
             textSize = 16f
             setTextColor(0xFF94A3B8.toInt())
             setPadding(dpToPx(8f).toInt(), 0, dpToPx(4f).toInt(), 0)
+            contentDescription = getString(R.string.close_panel_desc)
             setOnClickListener { togglePanel() }
         }
         headerRow.addView(statusText)
@@ -292,13 +311,13 @@ class FloatingBubbleService : Service() {
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
                 val ms = (30 + progress).toLong()
-                intervalLabel.text = "Tốc độ click: ${ms} ms"
+                intervalLabel.text = getString(R.string.panel_interval_format, ms)
                 if (fromUser) ClickerEngine.updateInterval(ms)
             }
             override fun onStartTrackingTouch(sb: SeekBar?) {}
             override fun onStopTrackingTouch(sb: SeekBar?) {}
         })
-        intervalLabel.text = "Tốc độ click: ${ClickerEngine.config.value.intervalMs} ms"
+        intervalLabel.text = getString(R.string.panel_interval_format, ClickerEngine.config.value.intervalMs)
         root.addView(seek)
 
         // Hàng nút điều khiển Start / Pause / Stop
@@ -308,7 +327,7 @@ class FloatingBubbleService : Service() {
         }
 
         val startPauseBtn = Button(this).apply {
-            text = if (ClickerEngine.state.value == ClickerState.RUNNING) "Tạm dừng" else "Bắt đầu"
+            text = if (ClickerEngine.state.value == ClickerState.RUNNING) getString(R.string.btn_pause) else getString(R.string.btn_start)
             textSize = 13f
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 marginEnd = dpToPx(6f).toInt()
@@ -323,7 +342,7 @@ class FloatingBubbleService : Service() {
         }
 
         val stopBtn = Button(this).apply {
-            text = "Dừng"
+            text = getString(R.string.btn_stop)
             textSize = 13f
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             setOnClickListener {
@@ -337,7 +356,7 @@ class FloatingBubbleService : Service() {
 
         // Nút bật/tắt tâm ngắm
         val toggleTargetBtn = Button(this).apply {
-            text = "🎯 Ẩn / Hiện tâm ngắm"
+            text = getString(R.string.btn_toggle_target)
             textSize = 12f
             setOnClickListener {
                 ClickerEngine.toggleTargetPointerVisibility()
@@ -349,14 +368,14 @@ class FloatingBubbleService : Service() {
         serviceScope.launch {
             ClickerEngine.state.collectLatest { state ->
                 statusText.text = when (state) {
-                    ClickerState.RUNNING -> "● Đang chạy"
-                    ClickerState.PAUSED -> "❙❙ Tạm dừng"
-                    ClickerState.IDLE -> "○ Sẵn sàng"
+                    ClickerState.RUNNING -> getString(R.string.panel_status_running)
+                    ClickerState.PAUSED -> getString(R.string.panel_status_paused)
+                    ClickerState.IDLE -> getString(R.string.panel_status_idle)
                 }
                 startPauseBtn.text = when (state) {
-                    ClickerState.RUNNING -> "Tạm dừng"
-                    ClickerState.PAUSED -> "Tiếp tục"
-                    ClickerState.IDLE -> "Bắt đầu"
+                    ClickerState.RUNNING -> getString(R.string.btn_pause)
+                    ClickerState.PAUSED -> getString(R.string.btn_resume)
+                    ClickerState.IDLE -> getString(R.string.btn_start)
                 }
             }
         }
@@ -364,7 +383,7 @@ class FloatingBubbleService : Service() {
         serviceScope.launch {
             ClickerEngine.clickCount.collectLatest { count ->
                 val conf = ClickerEngine.config.value
-                infoText.text = "Số click: $count | Tâm: (${conf.x.toInt()}, ${conf.y.toInt()})"
+                infoText.text = getString(R.string.panel_click_info_format, count, conf.x.toInt(), conf.y.toInt())
             }
         }
 
@@ -405,25 +424,16 @@ class FloatingBubbleService : Service() {
         }
     }
 
-    private fun overlayType(): Int =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else {
-            @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
-        }
-
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Auto Click Service",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Kênh thông báo duy trì bảng điều khiển nổi Auto Click"
-            }
-            val manager = getSystemService(NotificationManager::class.java)
-            manager?.createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            getString(R.string.notif_channel_name),
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = getString(R.string.notif_channel_desc)
         }
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.createNotificationChannel(channel)
     }
 
     private fun buildForegroundNotification() =
@@ -452,6 +462,7 @@ class FloatingBubbleService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        isServiceRunning = false
         bubbleView?.let { runCatching { windowManager.removeView(it) } }
         panelView?.let { runCatching { windowManager.removeView(it) } }
         targetPointerView?.let { runCatching { windowManager.removeView(it) } }
@@ -471,7 +482,6 @@ class FloatingBubbleService : Service() {
 
 /**
  * View con trỏ tâm ngắm (Target Pointer) vẽ hình tròn crosshair với số index "1" ở giữa.
- * Người dùng có thể nhìn thấy trực tiếp điểm chạm sẽ rơi vào đâu trên màn hình.
  */
 class TargetPointerView(context: Context) : View(context) {
 
@@ -498,24 +508,25 @@ class TargetPointerView(context: Context) : View(context) {
         isFakeBoldText = true
     }
 
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val cx = width / 2f
         val cy = height / 2f
         val radius = (width / 2f) - 4f
 
-        // Vòng tròn nền
         canvas.drawCircle(cx, cy, radius, circlePaint)
-        // Viền trắng
         canvas.drawCircle(cx, cy, radius, borderPaint)
 
-        // Crosshair vi mô ở 4 hướng
         canvas.drawLine(cx - radius, cy, cx - radius + 10f, cy, crosshairPaint)
         canvas.drawLine(cx + radius - 10f, cy, cx + radius, cy, crosshairPaint)
         canvas.drawLine(cx, cy - radius, cx, cy - radius + 10f, crosshairPaint)
         canvas.drawLine(cx, cy + radius - 10f, cx, cy + radius, crosshairPaint)
 
-        // Nhãn số 1 ở tâm
         val textY = cy - ((textPaint.descent() + textPaint.ascent()) / 2)
         canvas.drawText("1", cx, textY, textPaint)
     }
